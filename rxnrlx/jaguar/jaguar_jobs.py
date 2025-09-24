@@ -89,7 +89,7 @@ def irc(transition_state:Molecule, user_parameters:dict, num_tasks:int) -> tuple
     jaguar_input("irc.in", transition_state, irc_parameters)
 
     # Submit the job and wait
-    job_id = random.randint(10^8, 10^9-1)
+    job_id = random.randint(10**8, (10**9)-1)
     process = subprocess.Popen(
         f"$SCHRODINGER/jaguar run -jobname irc_{job_id} -PARALLEL {num_tasks} irc.in -W > irc.out", 
         shell=True
@@ -152,7 +152,7 @@ def geom_opt(forward_molecule, reverse_molecule, user_parameters, num_tasks) -> 
 
         jaguar_input(f"opt_{ext}.in", molec, opt_parameters)
 
-        job_id = random.randint(10^8, 10^9-1)
+        job_id = random.randint(10**8, (10**9)-1)
         subproc = subprocess.Popen(
             f"$SCHRODINGER/jaguar run -jobname opt_{ext}_{job_id} -PARALLEL {num_tasks//2} opt_{ext}.in -W > opt_{ext}.out", 
             shell=True
@@ -188,7 +188,6 @@ def calculate_gibbs(forward_molecule, reverse_molecule, transition_state, user_p
         "basis": "DEF2-TZVPD",
         "dftname": "wB97M-V",
         "ifreq": 1,
-        "nbo": 1,
         "iacc": 2
     }
     for key, val in user_parameters.items(): # Update with any user-specified parameters
@@ -202,7 +201,7 @@ def calculate_gibbs(forward_molecule, reverse_molecule, transition_state, user_p
 
         jaguar_input(f"energy_{ext}.in", molec, calc_parameters)
 
-        job_id = random.randint(10^8, 10^9-1)
+        job_id = random.randint(10**8, (10**9)-1)
         subproc = subprocess.Popen(
             f"$SCHRODINGER/jaguar run -jobname energy_{ext}_{job_id} -PARALLEL {num_tasks//3} energy_{ext}.in -W > energy_{ext}.out", 
             shell=True
