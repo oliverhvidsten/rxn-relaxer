@@ -50,7 +50,7 @@ def ts_relax(ts_guess:Molecule, user_parameters:dict, num_tasks:int) -> Molecule
     opt_ts.set_charge_and_spin(charge=ts_guess.charge, spin_multiplicity=ts_guess._spin_multiplicity)
     
     # Return to main job folder
-    os.chdir("/..")
+    os.chdir("./..")
 
     return opt_ts
 
@@ -110,7 +110,7 @@ def irc(transition_state:Molecule, user_parameters:dict, num_tasks:int) -> tuple
     reverse_molecule.set_charge_and_spin(charge=transition_state.charge, spin_multiplicity=transition_state._spin_multiplicity)
 
     # Return to main job folder
-    os.chdir("/..")
+    os.chdir("./..")
 
     return forward_molecule, reverse_molecule
 
@@ -167,7 +167,7 @@ def geom_opt(forward_molecule, reverse_molecule, user_parameters, num_tasks):
     fwd.set_charge_and_spin(charge=reverse_molecule.charge, spin_multiplicity=reverse_molecule._spin_multiplicity)
 
     # Return to folder
-    os.chdir("/..")
+    os.chdir("./..")
 
     return fwd, rev
 
