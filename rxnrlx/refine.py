@@ -34,6 +34,13 @@ def refine(config):
         else:
             raise Exception("The info section of the config file should contain either {\'old_job_folder\'} or {\'forward\', \'reverse\', and \'transition_state\'}")
     
+    # Set charge and multiplicity values for the molecules
+    for molec in [forward_molecule, reverse_molecule, transition_state]:
+        molec.set_charge_and_spin(
+            charge=config["info"].get("charge", 0),
+            spin_multiplicity=config["info"].get("multiplicity", 1)
+        )
+
     # implementation
     if config["info"]["software"] == "jaguar": 
         from rxnrlx.jaguar.jaguar_jobs import ts_relax, geom_opt, calculate_gibbs
