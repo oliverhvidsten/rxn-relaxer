@@ -28,14 +28,18 @@ def ts_relax(ts_guess:Molecule, user_parameters:dict, num_tasks:int) -> Molecule
         "molchg": ts_guess.charge,
         "multip": ts_guess.spin_multiplicity
     }
-    for key, val in user_parameters: # Update with any user-specified parameters
+    for key, val in user_parameters.items(): # Update with any user-specified parameters
         ts_parameters[key] = val
     jaguar_input("ts_opt.in", ts_guess, ts_parameters)
 
     # Submit the job and wait
-    job_id = random.randint(10^8, 10^9-1)
-    process = subprocess.Popen(["$SCHRODINGER/jaguar", f"run -jobname ts_relax_{job_id} -PARALLEL {num_tasks} ts_opt.in -W"])
-    print("Initial TS Relaxation Started")
+    job_id = random.randint(10**8, (10**9)-1)
+    process = subprocess.Popen(
+        f"$SCHRODINGER/jaguar run -jobname ts_relax_{job_id} -PARALLEL {num_tasks} ts_opt.in -W > ts_opt.out", 
+        shell=True
+    )
+    print("\nRunning 1 Transition State Optimization:")
+    print(f"1) $SCHRODINGER/jaguar run ts_opt.in -jobname ts_relax_{job_id} -PARALLEL {num_tasks}")
     process.wait()
 
     # TODO: Check if the process suceeded or failed
@@ -64,14 +68,14 @@ def irc(transition_state:Molecule, user_parameters:dict, num_tasks:int) -> tuple
         "isolv": 7,
         "maxitg": 60000,
         "isymm": 0,
-        "basis": "def2-svpd",
+        "basis": "DEF2-SVPD",
         "ircstep": 0.1,
         "maxit": 300,
         "geoconv_mode": "standard",
         "itrvec": 1,
         "babel": "xyz",
         "ircmxcyc": 300,
-        "dftname": "wb97x-d",
+        "dftname": "wB97X-D",
         "lqa_step": 1,
         "nogas": 2,
         "scale_geoconv": 3.0,
@@ -80,14 +84,18 @@ def irc(transition_state:Molecule, user_parameters:dict, num_tasks:int) -> tuple
         "molchg": transition_state.charge,
         "multip": transition_state.spin_multiplicity
     }
-    for key, val in user_parameters: # Update with any user-specified parameters
+    for key, val in user_parameters.items(): # Update with any user-specified parameters
         irc_parameters[key] = val
     jaguar_input("irc.in", transition_state, irc_parameters)
 
     # Submit the job and wait
     job_id = random.randint(10^8, 10^9-1)
-    process = subprocess.Popen(["$SCHRODINGER/jaguar", f"run -jobname irc_{job_id} -PARALLEL {num_tasks} irc.in -W"])
-    print("IRC Calculation Started")
+    process = subprocess.Popen(
+        f"$SCHRODINGER/jaguar run -jobname irc_{job_id} -PARALLEL {num_tasks} irc.in -W > irc.out", 
+        shell=True
+    )
+    print("Running 1 IRC Job:")
+    print(f"1) $SCHRODINGER/jaguar run irc.in -jobname irc_{job_id} -PARALLEL {num_tasks}")
     process.wait()
     print("IRC Calculation Finished\n")
 
@@ -117,8 +125,8 @@ def geom_opt(forward_molecule, reverse_molecule, user_parameters, num_tasks):
         "isolv": 7,
         "isymm": 0,
         "epsout": 18.5,
-        "dftname": "wb97x-v",
-        "basis": "def2-svpd",
+        "dftname": "wB97X-V",
+        "basis": "DEF2-SVPD",
         "babel": "xyz",
         "maxit": 300,
         "maxitg": 300,
@@ -127,24 +135,27 @@ def geom_opt(forward_molecule, reverse_molecule, user_parameters, num_tasks):
         "ip175": 2,
         "ip142": 2,
     }
-    for key, val in user_parameters: # Update with any user-specified parameters
+    for key, val in user_parameters.items(): # Update with any user-specified parameters
         opt_parameters[key] = val
 
 
     # Run a geometry opt for each molecule
+    print("Running 2 Optimizations:")
     processes = list()
-    for molec, ext in zip([forward_molecule, reverse_molecule], ["fwd", "rev"]):
+    for i, (molec, ext) in enumerate(zip([forward_molecule, reverse_molecule], ["fwd", "rev"])):
         opt_parameters["molchg"] = molec.charge
         opt_parameters["multip"] = molec.spin_multiplicity
 
         jaguar_input(f"opt_{ext}.in", molec, opt_parameters)
 
         job_id = random.randint(10^8, 10^9-1)
-        subproc = subprocess.Popen(["$SCHRODINGER/jaguar", f"run -jobname irc_{job_id} -PARALLEL {num_tasks//2} opt_{ext}.in -W"])
+        subproc = subprocess.Popen(
+            f"$SCHRODINGER/jaguar run -jobname opt_{ext}_{job_id} -PARALLEL {num_tasks//2} opt_{ext}.in -W > opt_{ext}.out", 
+            shell=True
+        )
+        print(f"{i}) $SCHRODINGER/jaguar run opt_{ext}.in -jobname opt_{ext}_{job_id} -PARALLEL {num_tasks//2}")
         processes.append(subproc)
     
-    # Wait for both to finish
-    print("Geometry Optimizations Started")
     for subp in processes:
         subp.wait()
     print("Geometry Optimizations Finished\n")

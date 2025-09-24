@@ -13,6 +13,20 @@ def create_gen_section(parameters:dict={}) -> str:
 
     return "\n".join(gen_section)
 
+
+def create_zmat_section(structure:Molecule):
+    """
+    Use the specified structure to create the zmat section of the input file
+    """
+    zmat_section = ["&zmat"]
+    for i, site in enumerate(structure.sites):
+        x,y,z = site.coords
+        symb = f"{site.species_string}{i}"
+        zmat_section.append(f"{symb:<5s} {x: .9f} {y: .9f} {z: .9f}")
+    zmat_section.append("&")
+
+    return "\n".join(zmat_section)
+
 def jaguar_input(file_name:str, structure:Molecule, parameters:dict={}):
     """
     Create an input file for a simple jaguar job for one structure
@@ -21,7 +35,7 @@ def jaguar_input(file_name:str, structure:Molecule, parameters:dict={}):
     gen_section = create_gen_section(parameters)
 
     # Create zmat section
-    zmat_section = structure.get_zmatrix()
+    zmat_section = create_zmat_section(structure)
 
     with open(file_name, "w") as f:
         f.write(f"{gen_section}\n{zmat_section}")
@@ -36,27 +50,4 @@ def multi_species_jaguar_input(structure:list[Molecule], parameters:dict={}):
     gen_section = create_gen_section(parameters)
     # TODO: create multiple zmat sections (check implementation requirements)
     raise NotImplementedError
-
-    
-
-    """
-    gen_section = [
-        "&gen",
-        f"igeopt = 2",
-        f"inhess = {nondefault_parameters.get('inhess', 4)}",
-        f"epsout = 18.5",
-        f"isolv = 7",
-        f"maxitg = 300",
-        f"isymm = 0",
-        f"basis = DEF2-SVPD",
-        f"maxit = 300",
-        f"ip472 = 2",
-        f"dftname = wB97X-D",
-        f"nogas = 2",
-        f"ip175 = 2",
-        f"iacc = 2",
-        f"&",
-    ]
-    &gen
-    """
 

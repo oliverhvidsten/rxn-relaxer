@@ -1,5 +1,4 @@
 from pymatgen.core.structure import Molecule
-
 import os, sys, yaml
 
 def ts2rxn(config:dict={}):
@@ -42,10 +41,12 @@ def ts2rxn(config:dict={}):
             user_parameters=config.get("ts_relax", {}), 
             num_tasks=config.get("submit", {"ntasks":2})["ntasks"]
         )
-    except:
+    except Exception as e:
         # If TS optimization fails, still keep the program going with the guess as the transition state
         if not config["info"].get("die_on_ts_failure", True):
             transition_state = ts_guess
+        else:
+            raise e
 
 
     # Perform IRC Analysis
