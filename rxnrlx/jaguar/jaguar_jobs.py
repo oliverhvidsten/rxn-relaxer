@@ -194,13 +194,13 @@ def get_mols_from_irc(outfile, num_atoms) -> tuple[Molecule, Molecule]:
 
 def find_molecule_in_section(lines, starting_place, num_atoms) -> Molecule:
     """ Find the first relaxed molecule definition to appear after the given line index """
-
+    
     # Find the geometry header line
     found = False
     i = starting_place
-    while found:
+    while not found:
         pattern = re.compile(r"atom\s+x\s+y\s+z")
-        if re.match(pattern, lines[i]):
+        if re.search(pattern, lines[i]):
             found = True
         i += 1
 
