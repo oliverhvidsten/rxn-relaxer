@@ -261,9 +261,9 @@ def find_molecule_in_section(lines, starting_place, num_atoms) -> Molecule:
         if re.search(pattern, lines[i]):
             found = True
         i -= 1 # iterating up the file now
-
-   
-    # i should now hold the first line of the atoms
+    
+    i+=2 # i should now hold the first line of the atoms
+    
     species_list = list()
     coord_list = list()
     for j in range(num_atoms):
