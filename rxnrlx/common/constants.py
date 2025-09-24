@@ -1,0 +1,5 @@
+
+# Final Structure filenames
+FWD_FILENAME = "FORWARD.xyz"
+REV_FILENAME = "REVERSE.xyz"
+TS_FILENAME = "TRANSITION_STATE.xyz"
