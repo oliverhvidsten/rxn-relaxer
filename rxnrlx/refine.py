@@ -8,6 +8,8 @@ from pymatgen.core.structure import Molecule
 
 from rxnrlx.common.constants import FWD_FILENAME, REV_FILENAME, TS_FILENAME
 
+import os, yaml
+
 def refine(config):
     """
     The options for this file should be as follow:
@@ -18,9 +20,10 @@ def refine(config):
     # User has the option to specify the old job folder or individual molecules
     # If they specify the old_job_folder, this program will grab the species from the final_structures subfolder
     if "old_job_folder" in config["info"]:
-        forward_molecule = Molecule.from_file(f'{config["info"]["folder"]}/final_structures/{FWD_FILENAME}')
-        reverse_molecule = Molecule.from_file(f'{config["info"]["folder"]}/final_structures/{REV_FILENAME}')
-        transition_state = Molecule.from_file(f'{config["info"]["folder"]}/final_structures/{TS_FILENAME}')
+        os.chdir(config["info"]["old_job_folder"])
+        forward_molecule = Molecule.from_file(f'./final_structures/{FWD_FILENAME}')
+        reverse_molecule = Molecule.from_file(f'./final_structures/{REV_FILENAME}')
+        transition_state = Molecule.from_file(f'./final_structures/{TS_FILENAME}')
 
     else: # In the event they did not specify the job folder, they should have specified 3 file locations where the molecules are located
         if ("forward" in config["info"]) and ("reverse" in config["info"]) and ("transition_state" in config["info"]):
@@ -36,6 +39,9 @@ def refine(config):
         from rxnrlx.jaguar.jaguar_jobs import ts_relax, geom_opt, calculate_gibbs
     else:
         raise NotImplementedError()
+    
+    os.mkdir("./refine_structures")
+    os.chdir("./refine_structures")
 
     # If user requests re-optimization of the inputs:
     if config["info"]["reoptimize"]:
@@ -76,4 +82,9 @@ def refine(config):
         num_tasks=config["info"].get("ntasks")
         )
     
+
+    with open("energy.yaml", 'w') as f:
+        yaml.dump(energy_info, f, default_flow_style=False)
+
+
     

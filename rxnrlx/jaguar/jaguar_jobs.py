@@ -179,8 +179,8 @@ def geom_opt(forward_molecule, reverse_molecule, user_parameters, num_tasks) -> 
 def calculate_gibbs(forward_molecule, reverse_molecule, transition_state, user_parameters, num_tasks) -> dict:
     """ Submits a single point energy calculation """
 
-    os.mkdir("./irc_calculation")
-    os.chdir("./irc_calculation")
+    os.mkdir("./energy_calculation")
+    os.chdir("./energy_calculation")
 
     calc_parameters = {
         "epsout": 18.5,
