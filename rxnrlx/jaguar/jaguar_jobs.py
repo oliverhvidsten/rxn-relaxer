@@ -109,6 +109,10 @@ def irc(transition_state:Molecule, user_parameters:dict, num_tasks:int) -> tuple
     forward_molecule.set_charge_and_spin(charge=transition_state.charge, spin_multiplicity=transition_state._spin_multiplicity)
     reverse_molecule.set_charge_and_spin(charge=transition_state.charge, spin_multiplicity=transition_state._spin_multiplicity)
 
+    # Save structures to assist with manual debugging
+    forward_molecule.to("forward_molecule.xyz")
+    reverse_molecule.to("reverse_molecule.xyz")
+
     # Return to main job folder
     os.chdir("./..")
 
@@ -194,7 +198,7 @@ def get_mols_from_irc(outfile, num_atoms) -> tuple[Molecule, Molecule]:
 
 def find_molecule_in_section(lines, starting_place, num_atoms) -> Molecule:
     """ Find the first relaxed molecule definition to appear after the given line index """
-    
+
     # Find the geometry header line
     found = False
     i = starting_place
