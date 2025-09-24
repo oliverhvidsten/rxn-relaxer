@@ -8,7 +8,7 @@ from pymatgen.core.structure import Molecule
 
 from rxnrlx.common.constants import FWD_FILENAME, REV_FILENAME, TS_FILENAME
 
-import os, yaml
+import os, sys, yaml
 
 def refine(config):
     """
@@ -94,4 +94,19 @@ def refine(config):
         yaml.dump(energy_info, f, default_flow_style=False)
 
 
-    
+if __name__ == "__main__":
+    """ Read in Command Line Arguments """
+    if len(sys.argv) == 2:
+        print(f"Configuration File: {sys.argv[1]}")
+        try:
+            with open(sys.argv[1], "r") as f:
+                config = yaml.safe_load(f)
+        except:
+            raise Exception("Invalid File Specified")
+    else:
+        error_message = [f"Invalid number of arguments ({len(sys.argv)}).",
+                         "Use format: ts2rxn.py <config_file.yaml>"]
+        raise Exception("\n".join(error_message))
+        
+    # Run main code
+    refine(config)
