@@ -27,11 +27,10 @@ def ts2rxn(config:dict={}):
     os.chdir(f"./{job_name}")
 
     # implementation
-    match config["info"]["software"]:
-        case "jaguar": 
-            from rxnrlx.jaguar.jaguar_jobs import ts_relax, irc, geom_opt
-        case _:
-            raise NotImplementedError()
+    if config["info"]["software"] == "jaguar": 
+        from rxnrlx.jaguar.jaguar_jobs import ts_relax, irc, geom_opt
+    else:
+        raise NotImplementedError()
 
 
     # Perform Transition State Optimization
