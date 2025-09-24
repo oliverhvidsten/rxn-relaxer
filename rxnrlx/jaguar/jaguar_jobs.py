@@ -118,7 +118,7 @@ def irc(transition_state:Molecule, user_parameters:dict, num_tasks:int) -> tuple
 
     return forward_molecule, reverse_molecule
 
-def geom_opt(forward_molecule, reverse_molecule, user_parameters, num_tasks):
+def geom_opt(forward_molecule, reverse_molecule, user_parameters, num_tasks) -> tuple[Molecule, Molecule]:
 
     # create new folder for inital TS_relaxation
     os.mkdir("./geometry_optimizations")
@@ -174,6 +174,60 @@ def geom_opt(forward_molecule, reverse_molecule, user_parameters, num_tasks):
     os.chdir("./..")
 
     return fwd, rev
+
+
+def calculate_gibbs(forward_molecule, reverse_molecule, transition_state, user_parameters, num_tasks) -> dict:
+    """ Submits a single point energy calculation """
+
+    os.mkdir("./irc_calculation")
+    os.chdir("./irc_calculation")
+
+    calc_parameters = {
+        "epsout": 18.5,
+        "isolv": 7,
+        "basis": "DEF2-TZVPD",
+        "dftname": "wB97M-V",
+        "ifreq": 1,
+        "nbo": 1,
+        "iacc": 2
+    }
+    for key, val in user_parameters.items(): # Update with any user-specified parameters
+        calc_parameters[key] = val
+
+    # Run a single point calculation for each molecule
+    processes = list()
+    for i, (molec, ext) in enumerate(zip([forward_molecule, reverse_molecule, transition_state], ["fwd", "rev", "ts"])):
+        calc_parameters["molchg"] = molec.charge
+        calc_parameters["multip"] = molec.spin_multiplicity
+
+        jaguar_input(f"energy_{ext}.in", molec, calc_parameters)
+
+        job_id = random.randint(10^8, 10^9-1)
+        subproc = subprocess.Popen(
+            f"$SCHRODINGER/jaguar run -jobname energy_{ext}_{job_id} -PARALLEL {num_tasks//3} energy_{ext}.in -W > energy_{ext}.out", 
+            shell=True
+        )
+        print(f"{i}) $SCHRODINGER/jaguar run energy_{ext}.in -jobname energy_{ext}_{job_id} -PARALLEL {num_tasks//3}")
+        processes.append(subproc)
+    
+    for subp in processes:
+        subp.wait()
+    print("Geometry Optimizations Finished\n")
+
+    # Get energetics from each outfile
+    # TODO: What does this outfile look like?
+
+    forward_energy = 8
+    reverse_energy = 9
+    ts_energy = 10
+
+    return {
+        "forward": forward_energy,
+        "reverse": reverse_energy,
+        "transition_state": ts_energy
+    }
+
+
 
 def get_mols_from_irc(outfile, num_atoms) -> tuple[Molecule, Molecule]:
     """ Get the optimized forward and backward molecules from the transition state """
