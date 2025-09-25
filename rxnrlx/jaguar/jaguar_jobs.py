@@ -42,13 +42,13 @@ def ts_relax(ts_guess:Molecule, user_parameters:dict, num_tasks:int) -> Molecule
     print(f"1) $SCHRODINGER/jaguar run ts_opt.in -jobname ts_relax_{job_id} -PARALLEL {num_tasks}")
     process.wait()
 
-    # TODO: Check if the process suceeded or failed
-    print("TS Relaxation Finished\n")
-
     # If the process succeeded, open the optimized TS structure
     opt_ts = Molecule.from_file("ts_opt.xyz") # TODO: double check if this is the correct file to read in
     opt_ts.set_charge_and_spin(charge=ts_guess.charge, spin_multiplicity=ts_guess._spin_multiplicity)
     
+    # TODO: Check if the process suceeded or failed
+    print("TS Relaxation Finished\n")
+
     # Return to main job folder
     os.chdir("./..")
 
@@ -97,8 +97,6 @@ def irc(transition_state:Molecule, user_parameters:dict, num_tasks:int) -> tuple
     print("Running 1 IRC Job:")
     print(f"1) $SCHRODINGER/jaguar run irc.in -jobname irc_{job_id} -PARALLEL {num_tasks}")
     process.wait()
-    print("IRC Calculation Finished\n")
-
 
     forward_molecule, reverse_molecule = get_mols_from_irc(
         outfile="irc.out", 
@@ -112,6 +110,8 @@ def irc(transition_state:Molecule, user_parameters:dict, num_tasks:int) -> tuple
     # Save structures to assist with manual debugging
     forward_molecule.to("forward_molecule.xyz")
     reverse_molecule.to("reverse_molecule.xyz")
+
+    print("IRC Calculation Finished\n")
 
     # Return to main job folder
     os.chdir("./..")
@@ -162,7 +162,6 @@ def geom_opt(forward_molecule, reverse_molecule, user_parameters, num_tasks) -> 
     
     for subp in processes:
         subp.wait()
-    print("Geometry Optimizations Finished\n")
 
     # Read the structures into Molecule objects
     fwd = Molecule.from_file("opt_fwd.xyz") # TODO: double check if this is the correct file to read in
@@ -170,6 +169,8 @@ def geom_opt(forward_molecule, reverse_molecule, user_parameters, num_tasks) -> 
     rev = Molecule.from_file("opt_rev.xyz") # TODO: double check if this is the correct file to read in
     fwd.set_charge_and_spin(charge=reverse_molecule.charge, spin_multiplicity=reverse_molecule._spin_multiplicity)
 
+    print("Geometry Optimizations Finished\n")
+    
     # Return to folder
     os.chdir("./..")
 
@@ -259,6 +260,7 @@ def get_mols_from_irc(outfile:str, num_atoms:int) -> tuple[Molecule, Molecule]:
     # find the molecules
     forward_molecule = find_molecule_in_section(lines, forward_section, num_atoms)
     reverse_molecule = find_molecule_in_section(lines, reverse_section, num_atoms)
+
 
     return forward_molecule, reverse_molecule
 

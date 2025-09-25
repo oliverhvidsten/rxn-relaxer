@@ -28,6 +28,8 @@ def ts2rxn(config:dict={}):
     os.makedirs(f"./{job_name}")
     os.chdir(f"./{job_name}")
 
+    job_folder = os.getcwd()
+
     # implementation
     if config["info"]["software"] == "jaguar": 
         from rxnrlx.jaguar.jaguar_jobs import ts_relax, irc, geom_opt
@@ -45,26 +47,34 @@ def ts2rxn(config:dict={}):
     except Exception as e:
         # If TS optimization fails, still keep the program going with the guess as the transition state
         if not config["info"].get("die_on_ts_failure", True):
+            print("TS Optimization Failed. Proceeding with TS Guess.")
             transition_state = ts_guess
         else:
             raise e
 
 
     # Perform IRC Analysis
-    forward_molecule, reverse_molecule = irc(
-        transition_state=transition_state, 
-        user_parameters=config.get("irc", {}), 
-        num_tasks=config["info"].get("ntasks", 2)
-    )
+    try:
+        forward_molecule, reverse_molecule = irc(
+            transition_state=transition_state, 
+            user_parameters=config.get("irc", {}), 
+            num_tasks=config["info"].get("ntasks", 2)
+        )
+    except Exception as e:
+        print("IRC Job Failed")
+        raise e
 
 
     # Optimize Forward and Reverse Molecules (reactants and products)
-    forward_optimized, reverse_optimized = geom_opt(
-        forward_molecule=forward_molecule, 
-        reverse_molecule=reverse_molecule,
-        user_parameters=config.get("geom_opt", {}), 
-        num_tasks=config["info"].get("ntasks", 2)
+    try:
+        forward_optimized, reverse_optimized = geom_opt(
+            forward_molecule=forward_molecule, 
+            reverse_molecule=reverse_molecule,
+            user_parameters=config.get("geom_opt", {}), 
+            num_tasks=config["info"].get("ntasks", 2)
         )
+    except Exception as e:
+        print("Geometry Optimizations Failed")
     
     # save the 3 molecules (forward, backward, and TS) in a dedicated folder
     os.mkdir("./final_structures")
