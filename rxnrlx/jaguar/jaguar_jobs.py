@@ -214,11 +214,12 @@ def calculate_gibbs(forward_molecule, reverse_molecule, transition_state, user_p
     print("Geometry Optimizations Finished\n")
 
     # Get energetics from each outfile
-    # TODO: What does this outfile look like?
+    forward_energy = get_energy_from_file("energy_fwd.out")
+    reverse_energy = get_energy_from_file("energy_rev.out")
+    ts_energy = get_energy_from_file("energy_ts.out")
 
-    forward_energy = 8
-    reverse_energy = 9
-    ts_energy = 10
+    # Return to main folder
+    os.chdir("..")
 
     return {
         "forward": forward_energy,
@@ -226,9 +227,22 @@ def calculate_gibbs(forward_molecule, reverse_molecule, transition_state, user_p
         "transition_state": ts_energy
     }
 
+def get_energy_from_file(outfile:str) -> float:
+    """ Get value of gibbs energy from energy output file"""
+
+    with open(outfile, "r") as f:
+        lines = f.readlines()
+
+    for line in lines:
+        if "Total Gibbs free energy" in line:
+            _, energy = line.split(":")
+            energy, _ = energy.split()
+    
+    return float(energy)
 
 
-def get_mols_from_irc(outfile, num_atoms) -> tuple[Molecule, Molecule]:
+
+def get_mols_from_irc(outfile:str, num_atoms:int) -> tuple[Molecule, Molecule]:
     """ Get the optimized forward and backward molecules from the transition state """
     
     with open(outfile, "r") as f:

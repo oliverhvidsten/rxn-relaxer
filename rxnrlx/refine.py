@@ -89,6 +89,18 @@ def refine(config):
         num_tasks=config["info"].get("ntasks")
         )
     
+    # Get reaction energetic information in electron Volts (eV)
+    dG = (energy_info["forward"] - energy_info["reverse"]) * 27.114 
+    barrier = (energy_info["transition_state"] - energy_info["reverse"]) * 27.114 
+    reverse_barrier = (energy_info["transition_state"] - energy_info["forward"]) * 27.114 
+
+    energy_info["Reaction Info (eV)"] = {
+        "Delta G": dG, 
+        "Forward Activation Barrier": barrier,
+        "Reverse Activation Barrier": reverse_barrier
+        }
+
+
 
     with open("energy.yaml", 'w') as f:
         yaml.dump(energy_info, f, default_flow_style=False)
