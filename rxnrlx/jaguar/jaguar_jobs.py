@@ -13,28 +13,14 @@ def ts_relax(ts_guess:Molecule, user_parameters:dict, num_tasks:int) -> Molecule
     # create new folder for inital TS_relaxation
     os.mkdir("./ts_relaxation")
     os.chdir("./ts_relaxation")
-    
-    # create TS relaxation input file
-    ts_parameters = {
-        "igeopt" : 2,
-        "inhess": 4,
-        "epsout": 18.5,
-        "isolv": 7,
-        "maxitg": 300,
-        "isymm": 0,
-        "basis": "DEF2-SVPD",
-        "maxit": 300,
-        "ip472": 2,
-        "dftname": "wB97X-D",
-        "nogas": 2,
-        "ip175": 2,
-        "iacc": 2,
-        "molchg": ts_guess.charge,
-        "multip": ts_guess.spin_multiplicity
-    }
-    for key, val in user_parameters.items(): # Update with any user-specified parameters
-        ts_parameters[key] = val
-    jaguar_input("ts_opt.in", ts_guess, ts_parameters)
+
+    # Set necessary parameters for code functionality
+    user_parameters["ip175"] = 2 # creates XYZ files
+    user_parameters["molchg"] = ts_guess.charge 
+    user_parameters["multip"] = ts_guess.spin_multiplicity 
+
+    # Create input file
+    jaguar_input("ts_opt.in", ts_guess, user_parameters)
 
     # Submit the job and wait
     start_time = time.time()
@@ -74,33 +60,13 @@ def irc(transition_state:Molecule, user_parameters:dict, num_tasks:int) -> tuple
     os.mkdir("./irc_calculation")
     os.chdir("./irc_calculation")
 
-    irc_parameters = {
-        "inhess": 4,
-        "no_mul_imag_freq": 1,
-        "epsout": 18.5,
-        "valid_sections": 0,
-        "isolv": 7,
-        "maxitg": 60000,
-        "isymm": 0,
-        "basis": "DEF2-SVPD",
-        "ircstep": 0.1,
-        "maxit": 300,
-        "geoconv_mode": "standard",
-        "itrvec": 1,
-        "babel": "xyz",
-        "ircmxcyc": 300,
-        "dftname": "wB97X-D",
-        "lqa_step": 1,
-        "nogas": 2,
-        "scale_geoconv": 3.0,
-        "ircmax": 100,
-        "irc": 1,
-        "molchg": transition_state.charge,
-        "multip": transition_state.spin_multiplicity
-    }
-    for key, val in user_parameters.items(): # Update with any user-specified parameters
-        irc_parameters[key] = val
-    jaguar_input("irc.in", transition_state, irc_parameters)
+    # Set necessary parameters for code functionality
+    user_parameters["babel"] = "xyz" # creates XYZ files
+    user_parameters["molchg"] = transition_state.charge 
+    user_parameters["multip"] = transition_state.spin_multiplicity 
+    
+    # Create input file
+    jaguar_input("irc.in", transition_state, user_parameters)
 
     # Submit the job and wait
     start_time = time.time()
@@ -145,34 +111,20 @@ def geom_opt(forward_molecule, reverse_molecule, user_parameters, num_tasks) -> 
     os.mkdir("./geometry_optimizations")
     os.chdir("./geometry_optimizations")
 
-    opt_parameters = {
-        "igeopt": 1,
-        "isolv": 7,
-        "isymm": 0,
-        "epsout": 18.5,
-        "dftname": "wB97X-V",
-        "basis": "DEF2-SVPD",
-        "babel": "xyz",
-        "maxit": 300,
-        "maxitg": 300,
-        "iacc": 2,
-        "nogas": 2,
-        "ip175": 2,
-        "ip142": 2,
-    }
-    for key, val in user_parameters.items(): # Update with any user-specified parameters
-        opt_parameters[key] = val
-
+    # Set necessary parameters for code functionality
+    user_parameters["ip175"] = 2 # creates XYZ files
 
     # Run a geometry opt for each molecule
     print("Running 2 Optimizations:")
     processes = list()
     start_time = time.time()
     for i, (molec, ext) in enumerate(zip([forward_molecule, reverse_molecule], ["fwd", "rev"])):
-        opt_parameters["molchg"] = molec.charge
-        opt_parameters["multip"] = molec.spin_multiplicity
+        # Set charge and multiplicity
+        user_parameters["molchg"] = molec.charge
+        user_parameters["multip"] = molec.spin_multiplicity
 
-        jaguar_input(f"opt_{ext}.in", molec, opt_parameters)
+        # Create input file
+        jaguar_input(f"opt_{ext}.in", molec, user_parameters)
 
         job_id = random.randint(10**8, (10**9)-1)
         subproc = subprocess.Popen(
