@@ -1,4 +1,4 @@
-from rxnrlx.jaguar.read_files import get_mols_from_irc, get_energy_from_file
+from rxnrlx.jaguar.read_files import get_mols_from_irc, get_energy_from_file, verify_success
 import os
 
 DIR_PATH = os.path.dirname(__file__)
@@ -26,5 +26,16 @@ def test_get_energy():
     assert energy == -799.720018
 
 
-def test_verify_success():
-    assert True
+def test_verify_success__successful_job():
+    """
+    Given an outfile of a successful job, ensure that the function returns a True value
+    """
+
+    assert verify_success(f"{DIR_PATH}/inputs/irc.out", "irc")
+
+
+def test_verify_success__failed_job():
+    """
+    Given an outfile of a failed job, ensure that the function returns a False value
+    """
+    assert not verify_success(f"{DIR_PATH}/inputs/ts.out", "ts")

@@ -80,6 +80,6 @@ def verify_success(outfile, name):
     with open(outfile, "r") as f:
         lines = f.readlines()
 
-    success_pattern = rf'Job {name} was completed on'
+    success_pattern = re.compile(rf'Job {name} completed on')
 
-    if re.match(success_pattern, lines[-1])
+    return re.match(success_pattern, lines[-1])

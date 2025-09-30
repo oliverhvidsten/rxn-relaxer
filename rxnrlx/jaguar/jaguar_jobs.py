@@ -1,9 +1,12 @@
 from pymatgen.core.structure import Molecule
 
 from rxnrlx.jaguar.create_inputs import jaguar_input
-from rxnrlx.jaguar.read_files import get_energy_from_file, get_mols_from_irc
+from rxnrlx.jaguar.read_files import get_energy_from_file, get_mols_from_irc, verify_success
+from rxnrlx.common.utils import sec_to_str
 
 import os, random, subprocess
+
+import time
 
 
 def ts_relax(ts_guess:Molecule, user_parameters:dict, num_tasks:int) -> Molecule:
@@ -34,6 +37,7 @@ def ts_relax(ts_guess:Molecule, user_parameters:dict, num_tasks:int) -> Molecule
     jaguar_input("ts_opt.in", ts_guess, ts_parameters)
 
     # Submit the job and wait
+    start_time = time.time()
     job_id = random.randint(10**8, (10**9)-1)
     process = subprocess.Popen(
         f"$SCHRODINGER/jaguar run -jobname ts_relax_{job_id} -PARALLEL {num_tasks} ts_opt.in -W > ts_opt.out", 
@@ -42,13 +46,22 @@ def ts_relax(ts_guess:Molecule, user_parameters:dict, num_tasks:int) -> Molecule
     print("\nRunning 1 Transition State Optimization:")
     print(f"1) $SCHRODINGER/jaguar run ts_opt.in -jobname ts_relax_{job_id} -PARALLEL {num_tasks}")
     process.wait()
+    duration = time.time() - start_time
+
+    # Print job result
+    if not verify_success("ts_opt.out", "ts_opt"):
+        print(f"TS Relaxation failed after: {sec_to_str(duration)}")
+        raise Exception("TS Relaxation did not converge")
+    else:
+        print(f"TS Relaxation finished successfully after: {sec_to_str(duration)}")
+
 
     # If the process succeeded, open the optimized TS structure
     opt_ts = Molecule.from_file("ts_opt.xyz") # TODO: double check if this is the correct file to read in
     opt_ts.set_charge_and_spin(charge=ts_guess.charge, spin_multiplicity=ts_guess._spin_multiplicity)
     
     # TODO: Check if the process suceeded or failed
-    print("TS Relaxation Finished\n")
+    print("TS Relaxation Succeeded \n")
 
     # Return to main job folder
     os.chdir("./..")
@@ -90,6 +103,7 @@ def irc(transition_state:Molecule, user_parameters:dict, num_tasks:int) -> tuple
     jaguar_input("irc.in", transition_state, irc_parameters)
 
     # Submit the job and wait
+    start_time = time.time()
     job_id = random.randint(10**8, (10**9)-1)
     process = subprocess.Popen(
         f"$SCHRODINGER/jaguar run -jobname irc_{job_id} -PARALLEL {num_tasks} irc.in -W > irc.out", 
@@ -98,6 +112,14 @@ def irc(transition_state:Molecule, user_parameters:dict, num_tasks:int) -> tuple
     print("Running 1 IRC Job:")
     print(f"1) $SCHRODINGER/jaguar run irc.in -jobname irc_{job_id} -PARALLEL {num_tasks}")
     process.wait()
+    duration = time.time() - start_time
+
+    # Print job result
+    if not verify_success("irc.out", "irc"):
+        print(f"IRC Calculation failed after: {sec_to_str(duration)}")
+        raise Exception("IRC Calculation did not converge")
+    else:
+        print(f"IRC Calculation finished successfully after: {sec_to_str(duration)}")
 
     forward_molecule, reverse_molecule = get_mols_from_irc(
         outfile="irc.out", 
@@ -111,8 +133,6 @@ def irc(transition_state:Molecule, user_parameters:dict, num_tasks:int) -> tuple
     # Save structures to assist with manual debugging
     forward_molecule.to("forward_molecule.xyz")
     reverse_molecule.to("reverse_molecule.xyz")
-
-    print("IRC Calculation Finished\n")
 
     # Return to main job folder
     os.chdir("./..")
@@ -147,6 +167,7 @@ def geom_opt(forward_molecule, reverse_molecule, user_parameters, num_tasks) -> 
     # Run a geometry opt for each molecule
     print("Running 2 Optimizations:")
     processes = list()
+    start_time = time.time()
     for i, (molec, ext) in enumerate(zip([forward_molecule, reverse_molecule], ["fwd", "rev"])):
         opt_parameters["molchg"] = molec.charge
         opt_parameters["multip"] = molec.spin_multiplicity
@@ -163,6 +184,23 @@ def geom_opt(forward_molecule, reverse_molecule, user_parameters, num_tasks) -> 
     
     for subp in processes:
         subp.wait()
+
+    duration = time.time() - start_time
+
+    # Print overall job result
+    print(f"Optimization jobs finished after: {sec_to_str(duration)}")
+
+    # Print more specific job results
+    fwd_result = verify_success("opt_fwd.out", "opt_fwd")
+    rev_result = verify_success("opt_rev.out", "opt_rev")
+    
+    print(f"Forward Molecule Optimiation: {'SUCCESSFUL' if fwd_result else 'FAILED'}")
+    print(f"Reverse Molecule Optimization: {'SUCCESSFUL' if rev_result else 'FAILED'}")
+    
+    if not (fwd_result and rev_result):
+        raise Exception("At least one geometry optimization failed")
+
+
 
     # Read the structures into Molecule objects
     fwd = Molecule.from_file("opt_fwd.xyz") # TODO: double check if this is the correct file to read in
@@ -196,6 +234,7 @@ def calculate_gibbs(forward_molecule, reverse_molecule, transition_state, user_p
         calc_parameters[key] = val
 
     # Run a single point calculation for each molecule
+    print("Running 3 Frequency Calculations")
     processes = list()
     for i, (molec, ext) in enumerate(zip([forward_molecule, reverse_molecule, transition_state], ["fwd", "rev", "ts"])):
         calc_parameters["molchg"] = molec.charge
@@ -213,7 +252,17 @@ def calculate_gibbs(forward_molecule, reverse_molecule, transition_state, user_p
     
     for subp in processes:
         subp.wait()
-    print("Geometry Optimizations Finished\n")
+    
+    fwd_result = verify_success("energy_fwd.out", "energy_fwd")
+    rev_result = verify_success("energy_rev.out", "energy_rev")
+    ts_result = verify_success("energy_ts.out", "energy_ts")
+
+    print(f"Forward Molecule Freqency Calculation: {'SUCCESSFUL' if fwd_result else 'FAILED'}")
+    print(f"Reverse Molecule Freqency Calculation: {'SUCCESSFUL' if rev_result else 'FAILED'}")
+    print(f"Transition State Freqency Calculation: {'SUCCESSFUL' if ts_result else 'FAILED'}")
+
+    if not (fwd_result and rev_result and ts_result):
+        raise Exception("At least one frequency calculation failed")
 
     # Get energetics from each outfile
     forward_energy = get_energy_from_file("energy_fwd.out")
