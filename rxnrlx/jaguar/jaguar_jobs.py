@@ -174,25 +174,16 @@ def calculate_gibbs(forward_molecule, reverse_molecule, transition_state, user_p
     os.mkdir("./energy_calculation")
     os.chdir("./energy_calculation")
 
-    calc_parameters = {
-        "epsout": 18.5,
-        "isolv": 7,
-        "basis": "DEF2-TZVPD",
-        "dftname": "wB97M-V",
-        "ifreq": 1,
-        "iacc": 2
-    }
-    for key, val in user_parameters.items(): # Update with any user-specified parameters
-        calc_parameters[key] = val
-
     # Run a single point calculation for each molecule
     print("Running 3 Frequency Calculations")
     processes = list()
     for i, (molec, ext) in enumerate(zip([forward_molecule, reverse_molecule, transition_state], ["fwd", "rev", "ts"])):
-        calc_parameters["molchg"] = molec.charge
-        calc_parameters["multip"] = molec.spin_multiplicity
+        # set charge and multiplicity
+        user_parameters["molchg"] = molec.charge
+        user_parameters["multip"] = molec.spin_multiplicity
 
-        jaguar_input(f"energy_{ext}.in", molec, calc_parameters)
+        # Create input file
+        jaguar_input(f"energy_{ext}.in", molec, user_parameters)
 
         job_id = random.randint(10**8, (10**9)-1)
         subproc = subprocess.Popen(

@@ -1,0 +1,65 @@
+info:
+  ts_guess_filename: ts_guess.xyz   # string (XYZ filex)
+  charge: 0                         # int
+  multiplicity: 1                   # int
+  job_name: relax_job               # string
+  software: jaguar                  # jaguar, q-chem, etc (only implemented for jaguar right now)
+  die_on_ts_failure: True
+  ntasks: 32
+
+ts_relax:
+  igeopt : 2
+  inhess: 4
+  epsout: 18.5
+  isolv: 7
+  maxitg: 300
+  isymm: 0
+  basis: DEF2-SVPD
+  maxit: 300
+  ip472: 2
+  dftname: wB97X-D
+  nogas: 2
+  ip175: 2
+  iacc: 2
+  # no need to specify charge or multiplicity, inferred from the "info" section
+
+
+irc:
+  irc: 1 
+  inhess: 4
+  no_mul_imag_freq: 1
+  epsout: 18.5
+  valid_sections: 0
+  isolv: 7
+  maxitg: 60000
+  isymm: 0
+  basis: DEF2-SVPD
+  ircstep: 0.1
+  maxit: 300
+  geoconv_mode: standard
+  itrvec: 1
+  babel: xyz
+  ircmxcyc: 300
+  dftname: wB97X-D
+  lqa_step: 1
+  nogas: 2
+  scale_geoconv: 3.0
+  ircmax: 100
+  # no need to specify charge or multiplicity, inferred from the "info" section
+
+
+geom_opt:
+  igeopt: 1 
+  isolv: 7
+  isymm: 0
+  epsout: 18.5
+  dftname": wB97X-V
+  basis: DEF2-SVPD
+  babel: xyz
+  maxit: 300
+  maxitg: 300
+  iacc: 2
+  nogas: 2
+  ip175: 2
+  ip142: 2
+  # no need to specify charge or multiplicity, inferred from the "info" section

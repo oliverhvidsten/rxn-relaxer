@@ -1,0 +1,51 @@
+info:
+  charge: 0                         # int
+  multiplicity: 1                   # int
+  old_job_folder: example_job       # string
+  software: jaguar                  # jaguar, q-chem, etc (only implemented for jaguar right now)
+  die_on_ts_failure: True
+  ntasks: 32
+  reoptimize: True
+
+ts_relax:
+  igeopt : 2
+  inhess: 4
+  epsout: 18.5
+  isolv: 7
+  maxitg: 300
+  isymm: 0
+  basis: DEF2-SVPD
+  maxit: 300
+  ip472: 2
+  dftname: wB97X-D
+  nogas: 2
+  ip175: 2
+  iacc: 2
+  # no need to specify charge or multiplicity, inferred from the "info" section
+
+energy:
+  epsout: 18.5
+  isolv: 7
+  basis: DEF2-TZVPD
+  dftname: wB97M-V
+  iacc: 2
+  ifreq: 1
+  nmder: 2
+  # no need to specify charge or multiplicity, inferred from the "info" section
+
+
+geom_opt:
+  igeopt: 1 
+  isolv: 7
+  isymm: 0
+  epsout: 18.5
+  dftname": wB97M-V
+  basis: DEF2-TZVPD
+  babel: xyz
+  maxit: 300
+  maxitg: 300
+  iacc: 2
+  nogas: 2
+  ip175: 2
+  ip142: 2
+  # no need to specify charge or multiplicity, inferred from the "info" section
