@@ -3,7 +3,7 @@ from pymatgen.core.structure import Molecule
 import re
 
 def get_energy_from_file(outfile:str) -> float:
-    """ Get value of gibbs energy from energy output file"""
+    """ Get value of gibbs energy from energy output file """
 
     with open(outfile, "r") as f:
         lines = f.readlines()
