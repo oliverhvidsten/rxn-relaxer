@@ -83,7 +83,7 @@ def ts2rxn(config:dict={}):
     reverse_optimized.to(REV_FILENAME)
     transition_state.to(TS_FILENAME)
 
-    print("Program Finished Gracefully.\n Have a Nice Day :)")
+    print("Program Finished Gracefully.\nHave a Nice Day :)")
 
 
 

@@ -1,14 +1,15 @@
 from pymatgen.core.structure import Molecule
 
 from rxnrlx.jaguar.create_inputs import jaguar_input
+from rxnrlx.jaguar.read_files import get_energy_from_file, get_mols_from_irc
 
-import os, random, subprocess, re
+import os, random, subprocess
 
 
 def ts_relax(ts_guess:Molecule, user_parameters:dict, num_tasks:int) -> Molecule:
     # create new folder for inital TS_relaxation
-    os.mkdir("./initial_ts_relaxation")
-    os.chdir("./initial_ts_relaxation")
+    os.mkdir("./ts_relaxation")
+    os.chdir("./ts_relaxation")
     
     # create TS relaxation input file
     ts_parameters = {
@@ -157,7 +158,7 @@ def geom_opt(forward_molecule, reverse_molecule, user_parameters, num_tasks) -> 
             f"$SCHRODINGER/jaguar run -jobname opt_{ext}_{job_id} -PARALLEL {num_tasks//2} opt_{ext}.in -W > opt_{ext}.out", 
             shell=True
         )
-        print(f"{i}) $SCHRODINGER/jaguar run opt_{ext}.in -jobname opt_{ext}_{job_id} -PARALLEL {num_tasks//2}")
+        print(f"{i+1}) $SCHRODINGER/jaguar run opt_{ext}.in -jobname opt_{ext}_{job_id} -PARALLEL {num_tasks//2}")
         processes.append(subproc)
     
     for subp in processes:
@@ -170,7 +171,7 @@ def geom_opt(forward_molecule, reverse_molecule, user_parameters, num_tasks) -> 
     fwd.set_charge_and_spin(charge=reverse_molecule.charge, spin_multiplicity=reverse_molecule._spin_multiplicity)
 
     print("Geometry Optimizations Finished\n")
-    
+
     # Return to folder
     os.chdir("./..")
 
@@ -207,7 +208,7 @@ def calculate_gibbs(forward_molecule, reverse_molecule, transition_state, user_p
             f"$SCHRODINGER/jaguar run -jobname energy_{ext}_{job_id} -PARALLEL {num_tasks//3} energy_{ext}.in -W > energy_{ext}.out", 
             shell=True
         )
-        print(f"{i}) $SCHRODINGER/jaguar run energy_{ext}.in -jobname energy_{ext}_{job_id} -PARALLEL {num_tasks//3}")
+        print(f"{i+1}) $SCHRODINGER/jaguar run energy_{ext}.in -jobname energy_{ext}_{job_id} -PARALLEL {num_tasks//3}")
         processes.append(subproc)
     
     for subp in processes:
@@ -227,72 +228,3 @@ def calculate_gibbs(forward_molecule, reverse_molecule, transition_state, user_p
         "reverse": reverse_energy,
         "transition_state": ts_energy
     }
-
-def get_energy_from_file(outfile:str) -> float:
-    """ Get value of gibbs energy from energy output file"""
-
-    with open(outfile, "r") as f:
-        lines = f.readlines()
-
-    for line in lines:
-        if "Total Gibbs free energy" in line:
-            _, energy = line.split(":")
-            energy, _ = energy.split()
-    
-    return float(energy)
-
-
-
-def get_mols_from_irc(outfile:str, num_atoms:int) -> tuple[Molecule, Molecule]:
-    """ Get the optimized forward and backward molecules from the transition state """
-    
-    with open(outfile, "r") as f:
-        lines = f.readlines()
-
-    # Get the places to search for the geometry definitions
-    for i, line in enumerate(lines):
-        if "Forward IRC cycle complete" in line:
-            forward_section = i
-        if "Reverse IRC cycle complete" in line:
-            reverse_section = i
-            break
-
-    # find the molecules
-    forward_molecule = find_molecule_in_section(lines, forward_section, num_atoms)
-    reverse_molecule = find_molecule_in_section(lines, reverse_section, num_atoms)
-
-
-    return forward_molecule, reverse_molecule
-
-
-def find_molecule_in_section(lines, starting_place, num_atoms) -> Molecule:
-    """ Find the first relaxed molecule definition to appear before the given line index """
-
-    # Find the geometry header line
-    found = False
-    i = starting_place
-    while not found:
-        pattern = re.compile(r"atom\s+x\s+y\s+z")
-        if re.search(pattern, lines[i]):
-            found = True
-        i -= 1 # iterating up the file now
-    
-    i+=2 # i should now hold the first line of the atoms
-    
-    species_list = list()
-    coord_list = list()
-    for j in range(num_atoms):
-        species, x, y, z = lines[i+j].split()
-
-        # Remove species index
-        species = re.sub(r'[^a-zA-Z]', '', species)
-
-        # add values to lists
-        species_list.append(species)
-        coord_list.append([float(x), float(y), float(z)])
-
-    # Return read in molecule (no charge or multiplicity information)
-    return Molecule(
-        species=species_list,
-        coords=coord_list,
-    )
