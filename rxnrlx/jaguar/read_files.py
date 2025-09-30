@@ -17,6 +17,7 @@ def get_energy_from_file(outfile:str) -> float:
 
 
 
+
 def get_mols_from_irc(outfile:str, num_atoms:int) -> tuple[Molecule, Molecule]:
     """ Get the optimized forward and backward molecules from the transition state """
     
@@ -37,6 +38,16 @@ def get_mols_from_irc(outfile:str, num_atoms:int) -> tuple[Molecule, Molecule]:
 
 
     return forward_molecule, reverse_molecule
+
+
+def get_mol_from_opt(outfile:str, num_atoms:int) -> Molecule:
+    """ Get Molecule out of a optimizaiton job (TS or Stable Geometry)"""
+    
+    with open(outfile, "r") as f:
+        lines = f.readlines()
+
+    return find_molecule_in_section(lines, lines[-1], num_atoms)
+
 
 
 def find_molecule_in_section(lines, starting_place, num_atoms) -> Molecule:

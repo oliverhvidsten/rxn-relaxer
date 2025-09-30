@@ -1,7 +1,7 @@
 from pymatgen.core.structure import Molecule
 
 from rxnrlx.jaguar.create_inputs import jaguar_input
-from rxnrlx.jaguar.read_files import get_energy_from_file, get_mols_from_irc, verify_success
+from rxnrlx.jaguar.read_files import get_energy_from_file, get_mols_from_irc, verify_success, get_mol_from_opt
 from rxnrlx.common.utils import sec_to_str
 
 import os, random, subprocess
@@ -57,7 +57,7 @@ def ts_relax(ts_guess:Molecule, user_parameters:dict, num_tasks:int) -> Molecule
 
 
     # If the process succeeded, open the optimized TS structure
-    opt_ts = Molecule.from_file("ts_opt.xyz") # TODO: double check if this is the correct file to read in
+    opt_ts = get_mol_from_opt("ts_opt.out", len(ts_guess))
     opt_ts.set_charge_and_spin(charge=ts_guess.charge, spin_multiplicity=ts_guess._spin_multiplicity)
     
     # TODO: Check if the process suceeded or failed
@@ -208,10 +208,10 @@ def geom_opt(
 
 
     # Read the structures into Molecule objects
-    fwd = Molecule.from_file("opt_fwd.xyz") # TODO: double check if this is the correct file to read in
+    fwd = get_mol_from_opt("opt_fwd.out", len(forward_molecule))
     fwd.set_charge_and_spin(charge=forward_molecule.charge, spin_multiplicity=forward_molecule._spin_multiplicity)
-    rev = Molecule.from_file("opt_rev.xyz") # TODO: double check if this is the correct file to read in
-    fwd.set_charge_and_spin(charge=reverse_molecule.charge, spin_multiplicity=reverse_molecule._spin_multiplicity)
+    rev = get_mol_from_opt("opt_rev.out", len(reverse_molecule))
+    rev.set_charge_and_spin(charge=reverse_molecule.charge, spin_multiplicity=reverse_molecule._spin_multiplicity)
 
     print("Geometry Optimizations Finished\n")
 
