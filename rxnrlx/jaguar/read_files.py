@@ -46,7 +46,7 @@ def get_mol_from_opt(outfile:str, num_atoms:int) -> Molecule:
     with open(outfile, "r") as f:
         lines = f.readlines()
 
-    return find_molecule_in_section(lines, lines[-1], num_atoms)
+    return find_molecule_in_section(lines, len(lines)-1, num_atoms)
 
 
 
