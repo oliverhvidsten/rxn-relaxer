@@ -8,7 +8,7 @@ info:
   reoptimize: True
 
 ts_relax:
-  igeopt : 2
+  igeopt: 2
   inhess: 4
   epsout: 18.5
   isolv: 7
