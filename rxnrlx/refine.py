@@ -86,8 +86,8 @@ def refine(config):
             stable_refined = True # New stable geometries optimized with this level of theory
 
         ## Save refined structures
-        os.mkdir("./refined_final_structures")
-        os.chdir("./refined_final_structures")
+        os.mkdir("./final_structures")
+        os.chdir("./final_structures")
         if stable_refined:
             forward_molecule.to(FWD_FILENAME)
             reverse_molecule.to(REV_FILENAME)
