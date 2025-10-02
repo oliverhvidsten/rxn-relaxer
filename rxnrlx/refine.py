@@ -52,6 +52,8 @@ def refine(config):
 
     # If user requests re-optimization of the inputs:
     if config["info"]["reoptimize"]:
+        stable_refined = False
+        ts_refined = False
         try:
             # Relax TS with new level of theory
             transition_state = ts_relax(
@@ -64,7 +66,9 @@ def refine(config):
                 raise Exception("TS Optimization Failed")
             else:
                 print("TS Optimization failed, keeping original geometry for energy calculation")
-
+        else:
+            ts_refined = True # New TS was optimized with this level of theory
+        
         # Optimize stable reactant and product with new level of theory 
         try:
             forward_molecule, reverse_molecule = geom_opt(
@@ -78,7 +82,17 @@ def refine(config):
                 raise Exception("Product and/or Reactant Optimizations Failed")
             else:
                 print("Stable Geometry Optimizations Failed, keeping original geometries for energy calculation")
-    
+        else:
+            stable_refined = True # New stable geometries optimized with this level of theory
+
+        ## Save refined structures
+        os.mkdir("./refined_final_structures")
+        os.chdir("./refined_final_structures")
+        if stable_refined:
+            forward_molecule.to(FWD_FILENAME)
+            reverse_molecule.to(REV_FILENAME)
+        if ts_refined:
+            transition_state.to(TS_FILENAME)
 
     # Next run the energetic calculations
     energy_info = calculate_gibbs(
